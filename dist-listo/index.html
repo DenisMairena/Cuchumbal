@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Control de Cuchumbal</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#f6f4ee;--card:#fff;--tx:#1d2a22;--mu:#5f6d64;--ac:#1f7a4d;--ac2:#e8f3ec;--bd:#d9ddd5;--wn:#b4531a;color-scheme:light}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#141a16;--card:#1d2620;--tx:#e8eee9;--mu:#9aa89f;--ac:#4cc58a;--ac2:#23352b;--bd:#33423a;--wn:#f09a5e;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#141a16;--card:#1d2620;--tx:#e8eee9;--mu:#9aa89f;--ac:#4cc58a;--ac2:#23352b;--bd:#33423a;--wn:#f09a5e;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.w{max-width:1100px;margin:0 auto;padding:16px}
+h1{font-size:22px;margin:0}h2{font-size:17px;margin:0 0 10px}
+.sub{color:var(--mu);font-size:13px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:14px;margin:12px 0}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:end}
+label{display:flex;flex-direction:column;font-size:12px;color:var(--mu);gap:3px}
+input{font:inherit;padding:8px 10px;border:1px solid var(--bd);border-radius:8px;background:var(--bg);color:var(--tx);min-width:0}
+button{font:inherit;padding:8px 14px;border:0;border-radius:8px;background:var(--ac);color:#fff;cursor:pointer;font-weight:600}
+button.g{background:var(--ac2);color:var(--ac)}button.d{background:transparent;color:var(--wn);padding:4px 8px}
+.tabs{display:flex;gap:6px;margin:12px 0;overflow-x:auto}
+.tabs button{background:var(--card);color:var(--tx);border:1px solid var(--bd)}
+.tabs button.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
+.st{background:var(--ac2);border-radius:10px;padding:10px}.st b{display:block;font-size:19px;color:var(--ac)}
+.sc{overflow-x:auto;border:1px solid var(--bd);border-radius:10px}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{padding:6px 8px;border-bottom:1px solid var(--bd);white-space:nowrap;text-align:center}
+th{background:var(--ac2);position:sticky;top:0}
+td:first-child,th:first-child{text-align:left;position:sticky;left:0;background:var(--card);z-index:1}
+th:first-child{background:var(--ac2)}
+td input[type=checkbox]{width:18px;height:18px;accent-color:var(--ac)}
+td input[type=number]{width:80px}
+.bar{height:8px;background:var(--bd);border-radius:5px;overflow:hidden;min-width:70px}.bar i{display:block;height:100%;background:var(--ac)}
+.win{font-size:32px;font-weight:800;text-align:center;padding:22px 8px;background:var(--ac2);border-radius:12px;color:var(--ac);margin:12px 0;min-height:84px}
+.tag{display:inline-block;background:var(--ac);color:#fff;border-radius:6px;padding:1px 7px;font-size:11px}
+footer{text-align:center;color:var(--mu);margin:26px 0 10px;font-size:13px}
+.hide{display:none}
+#login{min-height:80vh;display:flex;align-items:center;justify-content:center;padding:16px}
+#login .card{width:100%;max-width:340px;margin:0}
+#login.hide{display:none}
+#auth{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:16px;z-index:50}
+#auth.hide{display:none}#auth .card{width:100%;max-width:340px;margin:0}#auth input{width:100%}#ae{color:var(--wn);font-size:13px;min-height:18px}
+#login input{width:100%}#le{color:var(--wn);font-size:13px;min-height:18px}
+</style>
+</head>
+<body>
+<div id="login"><div class="card">
+  <h1 style="text-align:center">💰 Cuchumbal</h1>
+  <div class="sub" style="text-align:center;margin-bottom:12px">Ingresa para continuar</div>
+  <label>Usuario<input id="lu" autocomplete="off" onkeydown="if(event.key=='Enter')$('lp').focus()"></label>
+  <label style="margin-top:8px">Contraseña<input id="lp" type="password" autocomplete="off" onkeydown="if(event.key=='Enter')doLogin()"></label>
+  <div id="le"></div>
+  <button style="width:100%" onclick="doLogin()">Ingresar</button>
+</div></div>
+<div id="auth" class="hide"><div class="card">
+  <h2>🔒 Autorización requerida</h2>
+  <div class="sub" id="am" style="margin-bottom:10px"></div>
+  <label>Usuario autorizado<input id="au" autocomplete="off"></label>
+  <label style="margin-top:8px">Contraseña<input id="ap" type="password" autocomplete="off" onkeydown="if(event.key=='Enter')authOk()"></label>
+  <div id="ae"></div>
+  <div class="row"><button onclick="authOk()">Autorizar</button><button class="g" onclick="authCancel()">Cancelar</button></div>
+</div></div>
+<div class="w hide" id="app">
+  <div class="row" style="justify-content:space-between;align-items:center"><h1>💰 Control de Cuchumbal</h1><button class="g" onclick="logout()">← Login</button></div>
+  <div class="sub">Ahorro entre compañeros: aportes semanales, avance por persona y rifa de turnos.</div>
+
+  <div class="card">
+    <div class="row">
+      <label>Nombre del cuchumbal<input id="cn" value="Cuchumbal"></label>
+      <label>Meses (4 semanas c/u)<input id="cw" type="number" min="1" max="24" value="4" style="width:110px"></label>
+      <label>Fecha de inicio<input id="cd" type="date"></label>
+      <button class="g" onclick="saveCfg()">Guardar</button>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button id="t0" onclick="tab(0)">👥 Participantes</button>
+    <button id="t1" onclick="tab(1)">📅 Control semanal</button>
+    <button id="t2" onclick="tab(2)">🎲 Rifa</button>
+  </div>
+
+  <div class="stats" id="stats"></div>
+
+  <div id="p0">
+    <div class="card">
+      <h2>Registrar persona o agregar cuota</h2>
+      <div class="row">
+        <label>Buscar por nombre<input id="qs" list="dl" placeholder="Escribe para buscar" oninput="qSel()" style="width:200px"></label>
+        <datalist id="dl"></datalist>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <label>Nombre<input id="pn" oninput="qPrev()"></label>
+        <label>Apellido<input id="pa" oninput="qPrev()"></label>
+        <label>Cuota semanal<input value="L 300 (fija)" disabled style="width:120px"></label>
+        <button onclick="addP()">Agregar cuota</button>
+      </div>
+      <div class="sub" id="qi" style="margin-top:8px;color:var(--ac)"></div>
+      <div class="sub" id="cap" style="margin-top:8px"></div>
+    </div>
+    <div class="card"><div class="sc"><table id="tp"></table></div></div>
+  </div>
+
+  <div id="p1" class="hide">
+    <div class="card">
+      <h2>Pagos por semana</h2>
+      <div class="sub" style="margin-bottom:8px">Marca la casilla cuando la persona paga esa semana. Los totales se actualizan solos.</div>
+      <div class="sc"><table id="tw"></table></div>
+    </div>
+  </div>
+
+  <div id="p2" class="hide">
+    <div class="card">
+      <h2>🎡 Ruleta de turnos</h2>
+      <div class="row">
+        <label>Agregar nombre a la ruleta<input id="wn" placeholder="Nombre y apellido"></label>
+        <button onclick="addW()">Agregar</button>
+        <button class="g" onclick="loadW()">Cargar participantes registrados</button>
+      </div>
+      <div style="position:relative;max-width:340px;margin:14px auto 6px">
+        <div style="position:absolute;left:50%;top:-6px;transform:translateX(-50%);width:0;height:0;border-left:11px solid transparent;border-right:11px solid transparent;border-top:24px solid var(--wn);z-index:2"></div>
+        <canvas id="cv" width="340" height="340" style="width:100%;height:auto;display:block"></canvas>
+      </div>
+      <div class="win" id="win">¿Quién será?</div>
+      <div class="row" style="justify-content:center"><button id="sp" onclick="spin()">🎲 Girar ruleta</button><button class="g" onclick="undoLast()">Deshacer último turno</button></div>
+      <div class="sub" id="elig" style="margin-top:10px"></div>
+      <div id="wl" style="margin-top:8px"></div>
+    </div>
+    <div class="card">
+      <h2>Orden de turnos</h2>
+      <div class="sc"><table id="tr"></table></div>
+    </div>
+  </div>
+
+  <div class="card"><button class="d" onclick="resetAll()">Borrar todo y empezar de nuevo</button></div>
+  <footer>Credits: DENIS MAIRENA</footer>
+</div>
+
+<script>
+var FEE=300,S={cfg:{name:"Cuchumbal",weeks:16,start:""},people:[],nid:1,wheel:[],order:[]},MAX=50,busy=false,rot=0;
+function load(){try{var r=localStorage.getItem("cuchumbal_v2");if(r)S=JSON.parse(r)}catch(e){}S.wheel=S.wheel||[];S.order=S.order||[];S.people.forEach(function(p){p.m=FEE})}
+function save(){try{localStorage.setItem("cuchumbal_v2",JSON.stringify(S))}catch(e){}}
+function $(i){return document.getElementById(i)}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+function L(n){return "L "+Number(n).toLocaleString("es-HN",{maximumFractionDigits:2})}
+function nm(p){return p.n+" "+p.a}
+function nz(s){return String(s).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/\s+/g," ").trim()}
+function paidN(p){return p.paid.filter(Boolean).length}
+function turnOf(p){var o=S.order.filter(function(x){return nz(x.name)==nz(nm(p))})[0];return o?o.turn:0}
+function potW(){var t=0;S.people.forEach(function(p){t+=p.m});return t}
+function tab(i){for(var k=0;k<3;k++){$("p"+k).classList.toggle("hide",k!=i);$("t"+k).classList.toggle("on",k==i)}S.tab=i;save()}
+function saveCfg(){S.cfg.name=$("cn").value.trim()||"Cuchumbal";var m=parseInt($("cw").value)||4;S.cfg.weeks=Math.min(24,Math.max(1,m))*4;S.cfg.start=$("cd").value;
+ S.people.forEach(function(p){while(p.paid.length<S.cfg.weeks)p.paid.push(false);p.paid.length=S.cfg.weeks});save();render()}
+function findP(t){var k=nz(t);return S.people.filter(function(p){return nz(nm(p))==k})[0]}
+function fillDL(){$("dl").innerHTML=S.people.map(function(p){return "<option value=\""+esc(nm(p))+"\">"}).join("")}
+function qSel(){var p=findP($("qs").value);if(p){$("pn").value=p.n;$("pa").value=p.a}qPrev()}
+function qPrev(){var el=$("qi"),p=findP($("pn").value+" "+$("pa").value);
+ if(!p){el.textContent=($("pn").value||$("pa").value)?"Persona nueva: se registrará con su primera cuota de "+L(FEE)+".":"";return}
+ var k=paidN(p);el.textContent=nm(p)+": lleva "+L(k*FEE)+" de "+L(S.cfg.weeks*FEE)+" ("+k+" de "+S.cfg.weeks+" cuotas)"+(k>=S.cfg.weeks?" · COMPLETÓ el ahorro, no admite más cuotas.":" · la próxima será la cuota "+(k+1)+".")}
+function addQuota(p){var i=p.paid.indexOf(false);if(i<0){alert(nm(p)+" ya completó "+L(S.cfg.weeks*FEE)+". No se aceptan más cuotas.");return false}p.paid[i]=true;return true}
+function addP(){var n=$("pn").value.trim(),a=$("pa").value.trim();
+ if(!n||!a){alert("Escribe nombre y apellido.");return}
+ var ex=findP(n+" "+a),p=ex;
+ if(ex){if(!addQuota(ex))return}
+ else{if(S.people.length>=MAX){alert("Se alcanzó el máximo de "+MAX+" personas.");return}
+  var pd=[];for(var i=0;i<S.cfg.weeks;i++)pd.push(false);pd[0]=true;p={id:S.nid++,n:n,a:a,m:FEE,paid:pd};S.people.push(p)}
+ $("pn").value="";$("pa").value="";$("qs").value="";save();render();
+ $("qi").textContent="✔ Cuota "+paidN(p)+" de "+S.cfg.weeks+" para "+nm(p)+": lleva "+L(paidN(p)*FEE)+(ex?"":" (persona nueva registrada).");$("pn").focus()}
+function delP(id){var p=S.people.filter(function(x){return x.id==id})[0];askAuth("Eliminar a "+nm(p),function(){S.people=S.people.filter(function(x){return x.id!=id});save();render()})}
+function setM(id,v){var p=S.people.filter(function(x){return x.id==id})[0];var m=parseFloat(v);if(m>0){p.m=m;save();render()}}
+function tog(id,w){var p=S.people.filter(function(x){return x.id==id})[0];p.paid[w]=!p.paid[w];save();render()}
+function inW(name){var k=nz(name);return S.wheel.some(function(x){return nz(x)==k})||S.order.some(function(o){return nz(o.name)==k})}
+function addW(){var v=$("wn").value.trim().replace(/\s+/g," ");if(!v)return;if(inW(v)){alert("Ese nombre ya está en la ruleta o ya tiene turno.");return}S.wheel.push(v);$("wn").value="";$("wn").focus();save();render()}
+function loadW(){var c=0;S.people.forEach(function(p){if(!inW(nm(p))){S.wheel.push(nm(p));c++}});if(!c)alert("No hay participantes nuevos para cargar.");save();render()}
+function delW(i){S.wheel.splice(i,1);save();render()}
+function undoLast(){if(busy||!S.order.length){return}var o=S.order[S.order.length-1];askAuth("Anular el turno "+o.turn+" de "+o.name,function(){S.order.pop();S.wheel.push(o.name);$("win").textContent="¿Quién será?";save();render()})}
+function resetAll(){askAuth("Borrar TODOS los datos",function(){S={cfg:{name:"Cuchumbal",weeks:16,start:""},people:[],nid:1,wheel:[],order:[]};rot=0;save();render()})}
+function drawWheel(){var c=$("cv"),x=c.getContext("2d"),n=S.wheel.length,R=170,seg=2*Math.PI/Math.max(n,1);
+ x.clearRect(0,0,340,340);
+ if(!n){x.beginPath();x.arc(R,R,R-4,0,7);x.fillStyle="#9aa89f55";x.fill();x.fillStyle="#888";x.font="16px system-ui";x.textAlign="center";x.fillText(S.order.length?"Todos tienen turno":"Agrega nombres",R,R);return}
+ for(var i=0;i<n;i++){var a0=rot+i*seg;x.beginPath();x.moveTo(R,R);x.arc(R,R,R-4,a0,a0+seg);x.closePath();x.fillStyle="hsl("+(i*137.5%360)+",55%,42%)";x.fill();x.strokeStyle="#fff";x.lineWidth=1.5;x.stroke();
+  x.save();x.translate(R,R);x.rotate(a0+seg/2);x.textAlign="right";x.fillStyle="#fff";x.font="600 "+(n>20?10:n>12?12:14)+"px system-ui";var t=S.wheel[i];if(t.length>18)t=t.slice(0,17)+"…";x.fillText(t,R-16,5);x.restore()}
+ x.beginPath();x.arc(R,R,16,0,7);x.fillStyle="#fff";x.fill()}
+function spin(){
+ if(busy)return;var n=S.wheel.length;if(!n){alert(S.order.length?"Todos ya tienen turno.":"Agrega nombres a la ruleta primero.");return}
+ var ar=new Uint32Array(1);(window.crypto||{getRandomValues:function(a){a[0]=Math.random()*4294967296}}).getRandomValues(ar);
+ var idx=ar[0]%n,seg=2*Math.PI/n,TP=Math.PI*2,tgt=1.5*Math.PI-(idx+.5)*seg,cur=((rot%TP)+TP)%TP,d=((tgt-cur)%TP+TP)%TP+TP*6,start=rot,t0=null,dur=5000;busy=true;$("sp").disabled=true;
+ function f(ts){if(!t0)t0=ts;var p=Math.min((ts-t0)/dur,1),e=1-Math.pow(1-p,3.5);rot=start+d*e;drawWheel();
+  if(p<1)requestAnimationFrame(f);else{var name=S.wheel[idx];S.wheel.splice(idx,1);S.order.push({name:name,turn:S.order.length+1});rot=0;busy=false;$("sp").disabled=false;$("win").textContent="🎉 Turno "+S.order.length+": "+name;save();render(true)}}
+ requestAnimationFrame(f)}
+function weekLabel(i){if(!S.cfg.start)return "S"+(i+1);var d=new Date(S.cfg.start+"T00:00:00");d.setDate(d.getDate()+7*i);return "S"+(i+1)+"<br><span class=sub>"+d.toLocaleDateString("es-HN",{day:"2-digit",month:"short"})+"</span>"}
+function renderStats(){
+ var tot=0,exp=0;S.people.forEach(function(p){tot+=paidN(p)*p.m;exp+=p.m*S.cfg.weeks});
+ $("stats").innerHTML=[["Participantes",S.people.length+" / mín. 25"],["Aporte por semana",L(potW())],["Total recolectado",L(tot)],["Meta total ("+S.cfg.weeks+" sem.)",L(exp)],["Turnos asignados",S.order.length+" de "+S.people.length]].map(function(x){return "<div class=st>"+x[0]+"<b>"+x[1]+"</b></div>"}).join("")}
+function renderTables(){
+ var H="<tr><th>Nombre</th><th>Ahorro semanal</th><th>Semanas pagadas</th><th>Lleva aportado</th><th>Falta</th><th>Turno</th><th></th></tr>";
+ S.people.forEach(function(p,i){var k=paidN(p),tot=S.cfg.weeks*p.m,tn=turnOf(p);
+  H+="<tr><td>"+(i+1)+". "+esc(nm(p))+"</td><td>"+L(p.m)+"</td><td>"+k+" / "+S.cfg.weeks+"<div class=bar><i style=\"width:"+(k/S.cfg.weeks*100)+"%\"></i></div></td><td><b>"+L(k*p.m)+"</b></td><td>"+L(tot-k*p.m)+"</td><td>"+(tn?"<span class=tag>Turno "+tn+"</span>":"—")+"</td><td><button class=d onclick=\"delP("+p.id+")\">Eliminar</button></td></tr>"});
+ if(!S.people.length)H+="<tr><td colspan=7 class=sub>Aún no hay participantes.</td></tr>";
+ $("tp").innerHTML=H;
+ var W="<tr><th>Persona</th>";for(var i=0;i<S.cfg.weeks;i++)W+="<th>"+weekLabel(i)+"</th>";W+="<th>Aportado</th><th>Falta</th></tr>";
+ S.people.forEach(function(p){var tn=turnOf(p);W+="<tr><td>"+esc(nm(p))+(tn?" <span class=tag>T"+tn+"</span>":"")+"<div class=sub>"+L(p.m)+" / semana</div></td>";
+  for(var i=0;i<S.cfg.weeks;i++)W+="<td><input type=checkbox "+(p.paid[i]?"checked":"")+" onchange=\"tog("+p.id+","+i+")\"></td>";
+  W+="<td><b>"+L(paidN(p)*p.m)+"</b></td><td>"+L((S.cfg.weeks-paidN(p))*p.m)+"</td></tr>"});
+ if(!S.people.length)W+="<tr><td colspan=3 class=sub>Registra participantes para ver el control.</td></tr>";
+ $("tw").innerHTML=W;
+ var n=S.people.length;$("cap").textContent=n+" registrados · espacio para "+MAX+" · mínimo: 25"+(n<25?" (faltan "+(25-n)+")":" ✔")}
+function renderWheelUI(){
+ $("elig").textContent=S.wheel.length+" nombre(s) en la ruleta · "+S.order.length+" turno(s) ya sorteado(s).";
+ $("wl").innerHTML=S.wheel.map(function(w,i){return "<span class=tag style='margin:2px;padding:3px 8px'>"+esc(w)+" <a href=# onclick='delW("+i+");return false' style='color:#fff;text-decoration:none'>✕</a></span>"}).join("");
+ var R="<tr><th>Turno</th><th>Nombre</th><th>Recibe (semana "+"del turno)</th><th>En control</th></tr>";
+ S.order.forEach(function(o){var ok=S.people.some(function(p){return nz(nm(p))==nz(o.name)});R+="<tr><td><b>"+o.turn+"</b></td><td style='text-align:left'>"+esc(o.name)+"</td><td>"+L(potW())+"</td><td>"+(ok?"✔":"⚠ no coincide con un participante")+"</td></tr>"});
+ if(!S.order.length)R+="<tr><td colspan=4 class=sub>Todavía no se ha sorteado ningún turno.</td></tr>";
+ $("tr").innerHTML=R}
+function render(keep){fillDL();qPrev();$("cn").value=S.cfg.name;$("cw").value=S.cfg.weeks/4;$("cd").value=S.cfg.start||"";document.title=S.cfg.name;renderStats();renderTables();renderWheelUI();drawWheel()}
+var OK=["f00fc010f3789548448575e2bad8b62a8758e8404cc32ea752d71a16248832e2", "dd43fb14c49ca351308ed987f24a0c87e763c4382dfc437a09f08a095df159d1", "7ed00705ddbe8fe1a2c420dc75699cd67c4bec794fe7c25e6285c3c5bbfce711"];
+async function hsh(u,p){var b=new TextEncoder().encode("cuchumbal|"+nz(u)+"|"+p),h=await crypto.subtle.digest("SHA-256",b);return Array.from(new Uint8Array(h)).map(function(x){return x.toString(16).padStart(2,"0")}).join("")}
+async function doLogin(){var e=$("le");e.textContent="";var h;try{h=await hsh($("lu").value,$("lp").value)}catch(x){e.textContent="No se pudo validar el acceso.";return}
+ if(OK.indexOf(h)>=0){showApp()}else{e.textContent="Contraseña incorrecta.";$("lp").value=""}}
+var AUTHFN=null;
+function askAuth(msg,fn){AUTHFN=fn;$("am").textContent=msg+". Solo el usuario autorizado puede confirmar.";$("au").value="";$("ap").value="";$("ae").textContent="";$("auth").classList.remove("hide");$("au").focus()}
+function authCancel(){AUTHFN=null;$("auth").classList.add("hide")}
+async function authOk(){var h;try{h=await hsh($("au").value,$("ap").value)}catch(x){$("ae").textContent="No se pudo validar.";return}
+ if(h===OK[0]){var f=AUTHFN;authCancel();if(f)f()}else{$("ae").textContent="Contraseña incorrecta.";$("ap").value=""}}
+function showApp(){$("login").classList.add("hide");$("app").classList.remove("hide")}
+function logout(){try{sessionStorage.removeItem("cuch_ok")}catch(x){}$("app").classList.add("hide");$("login").classList.remove("hide");$("lu").value="";$("lp").value=""}
+load();render();tab(S.tab||0);
+</script>
+</body>
+</html>
